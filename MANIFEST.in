@@ -1,2 +1,6 @@
 include README.md
 include CHANGELOG
+include config.example.yaml
+include piface-mqtt.py
+include piface-mqtt.service
+recursive-include piface_mqtt *.py

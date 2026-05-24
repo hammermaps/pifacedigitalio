@@ -6,9 +6,8 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=pi
 # Adjust the path to the script and config file as needed
-ExecStart=/usr/bin/python3 /opt/piface-mqtt/piface-mqtt.py --config /etc/piface-mqtt/config.yaml
+ExecStart=/usr/local/bin/piface-mqtt.py --config /etc/piface-mqtt/config.yaml
 Restart=on-failure
 RestartSec=5
 # Give the process a chance to shut down cleanly

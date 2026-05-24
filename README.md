@@ -80,14 +80,13 @@ MQTT so that the board can be integrated into [Home Assistant](https://www.home-
 
 1. **Install dependencies**
 
-       $ sudo pip3 install paho-mqtt PyYAML
+      $ sudo python3 -m pip install .
 
-2. **Copy files to the target location**
+2. **Copy the configuration and service files to the target location**
 
-       $ sudo mkdir -p /opt/piface-mqtt /etc/piface-mqtt
-       $ sudo cp piface-mqtt.py /opt/piface-mqtt/
-       $ sudo cp -r piface_mqtt /opt/piface-mqtt/
-       $ sudo cp config.example.yaml /etc/piface-mqtt/config.yaml
+      $ sudo mkdir -p /etc/piface-mqtt
+      $ sudo cp config.example.yaml /etc/piface-mqtt/config.yaml
+      $ sudo cp piface-mqtt.service /etc/systemd/system/
 
 3. **Edit the configuration**
 
@@ -97,9 +96,11 @@ MQTT so that the board can be integrated into [Home Assistant](https://www.home-
 
 4. **Install and enable the systemd service**
 
-       $ sudo cp piface-mqtt.service /etc/systemd/system/
-       $ sudo systemctl daemon-reload
-       $ sudo systemctl enable --now piface-mqtt
+      $ sudo systemctl daemon-reload
+      $ sudo systemctl enable --now piface-mqtt
+
+   If you want to run the service as a non-root account, set `User=` in
+   `piface-mqtt.service` before enabling it.
 
 5. **Check the service status**
 

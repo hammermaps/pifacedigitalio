@@ -35,6 +35,20 @@ class BridgeConfig:
     homeassistant: HomeAssistantConfig = field(default_factory=HomeAssistantConfig)
 
 
+def _parse_bool(value, setting_name: str) -> bool:
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, str):
+        normalized = value.strip().lower()
+        if normalized in {"1", "true", "on", "yes"}:
+            return True
+        if normalized in {"0", "false", "off", "no"}:
+            return False
+    raise ValueError(
+        f"{setting_name} must be a boolean or one of: true/false, on/off, yes/no, 1/0"
+    )
+
+
 def load_config(path: str) -> BridgeConfig:
     """Load and parse a YAML configuration file into a BridgeConfig object."""
     with open(path, "r") as fh:
@@ -60,7 +74,7 @@ def load_config(path: str) -> BridgeConfig:
     )
 
     ha = HomeAssistantConfig(
-        discovery=bool(ha_raw.get("discovery", True)),
+        discovery=_parse_bool(ha_raw.get("discovery", True), "homeassistant.discovery"),
         discovery_prefix=ha_raw.get("discovery_prefix", "homeassistant"),
     )
 

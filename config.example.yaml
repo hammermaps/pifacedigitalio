@@ -20,7 +20,7 @@ mqtt:
 piface:
   # Number of PiFace Digital boards connected (1–4)
   boards: 1
-  # Fallback polling interval in seconds (used only when interrupts are unavailable)
+  # Reserved for a future polling fallback; currently unused because the bridge requires interrupts
   poll_interval: 0.1
 
 homeassistant:

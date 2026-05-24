@@ -41,10 +41,6 @@ class PifaceMqttBridge:
         """Initialise hardware, connect to MQTT and start the bridge."""
         self._init_piface()
         self._init_mqtt()
-        self._publish_online()
-        if self._cfg.homeassistant.discovery:
-            self._publish_discovery()
-        self._publish_initial_states()
         self._start_listeners()
         logger.info("PiFace MQTT bridge running. Press Ctrl+C to stop.")
         try:
@@ -66,9 +62,14 @@ class PifaceMqttBridge:
                 board.deinit_board()
             except Exception:
                 pass
-        self._publish_offline()
-        self._client.loop_stop()
+        result = self._publish_offline()
+        if result is not None:
+            try:
+                result.wait_for_publish()
+            except Exception:
+                pass
         self._client.disconnect()
+        self._client.loop_stop()
         logger.info("Shutdown complete.")
 
     # ------------------------------------------------------------------
@@ -117,6 +118,10 @@ class PifaceMqttBridge:
             client.subscribe(f"{prefix}/{board}/relay/+/set")
             client.subscribe(f"{prefix}/{board}/led/+/set")
         logger.debug("Subscribed to output command topics.")
+        self._publish_online()
+        if self._cfg.homeassistant.discovery:
+            self._publish_discovery()
+        self._publish_initial_states()
 
     def _on_message(self, client, userdata, msg):
         topic = msg.topic
@@ -128,17 +133,31 @@ class PifaceMqttBridge:
         #   {prefix}/{board}/output/{pin}/set
         #   {prefix}/{board}/relay/{relay}/set
         #   {prefix}/{board}/led/{led}/set
-        parts = topic.split("/")
-        # parts[0] = prefix (may contain slashes if prefix has slashes – keep simple)
-        if len(parts) < 5:
-            return
-        try:
-            board_id = int(parts[1])
-            io_type = parts[2]   # output / relay / led
-            index = int(parts[3])
-            value = 1 if payload in ("1", "ON", "on", "true", "True") else 0
-        except (ValueError, IndexError):
+        if prefix:
+            prefix_with_sep = f"{prefix}/"
+            if not topic.startswith(prefix_with_sep):
+                logger.warning("Unrecognised topic format: %s", topic)
+                return
+            relative_topic = topic[len(prefix_with_sep):]
+        else:
+            relative_topic = topic
+
+        parts = relative_topic.split("/")
+        if len(parts) != 4 or parts[3] != "set":
             logger.warning("Unrecognised topic format: %s", topic)
+            return
+
+        try:
+            board_id = int(parts[0])
+            io_type = parts[1]
+            index = int(parts[2])
+        except ValueError:
+            logger.warning("Unrecognised topic format: %s", topic)
+            return
+
+        value = self._decode_command_payload(payload)
+        if value is None:
+            logger.warning("Ignoring invalid payload %r for topic %s", payload, topic)
             return
 
         board = self._boards.get(board_id)
@@ -187,6 +206,8 @@ class PifaceMqttBridge:
             # Read actual pin value for reliability
             board = self._boards[board_id]
             value = board.input_pins[pin].value
+            if self._input_state[board_id][pin] == value:
+                return
             self._input_state[board_id][pin] = value
             self._publish(f"{prefix}/{board_id}/input/{pin}/state", str(value))
             logger.debug("Board %d input %d changed to %d", board_id, pin, value)
@@ -202,6 +223,7 @@ class PifaceMqttBridge:
         for board_id, board in self._boards.items():
             for pin in range(8):
                 value = board.input_pins[pin].value
+                self._input_state[board_id][pin] = value
                 self._publish(f"{prefix}/{board_id}/input/{pin}/state", str(value), retain=True)
             for pin in range(8):
                 value = board.output_pins[pin].value
@@ -227,10 +249,10 @@ class PifaceMqttBridge:
     # ------------------------------------------------------------------
 
     def _publish_online(self):
-        self._publish(f"{self._cfg.mqtt.topic_prefix}/status", "online", retain=True)
+        return self._publish(f"{self._cfg.mqtt.topic_prefix}/status", "online", retain=True)
 
     def _publish_offline(self):
-        self._publish(f"{self._cfg.mqtt.topic_prefix}/status", "offline", retain=True)
+        return self._publish(f"{self._cfg.mqtt.topic_prefix}/status", "offline", retain=True)
 
     # ------------------------------------------------------------------
     # Helpers
@@ -240,6 +262,16 @@ class PifaceMqttBridge:
         result = self._client.publish(topic, payload, retain=retain)
         if result.rc != mqtt.MQTT_ERR_SUCCESS:
             logger.warning("Failed to publish to %s (rc=%d)", topic, result.rc)
+        return result
+
+    @staticmethod
+    def _decode_command_payload(payload: str):
+        normalized = payload.strip().lower()
+        if normalized in {"1", "on", "true"}:
+            return 1
+        if normalized in {"0", "off", "false"}:
+            return 0
+        return None
 
 
 def run(cfg: BridgeConfig):
