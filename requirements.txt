@@ -1,1 +1,3 @@
 pifacecommon==4.0.0
+paho-mqtt>=1.6.1
+PyYAML>=6.0
