@@ -1,0 +1,30 @@
+# PiFace Digital MQTT Bridge – Example Configuration
+#
+# Copy this file to /etc/piface-mqtt/config.yaml and adjust the values.
+
+mqtt:
+  # Hostname or IP address of your MQTT broker
+  broker: "192.168.1.x"
+  # MQTT port (default: 1883, TLS: 8883)
+  port: 1883
+  # Credentials – leave empty if the broker allows anonymous access
+  username: ""
+  password: ""
+  # MQTT topic prefix used for all PiFace topics
+  topic_prefix: "piface"
+  # MQTT client identifier – must be unique per broker
+  client_id: "piface-mqtt"
+  # Keep-alive interval in seconds
+  keepalive: 60
+
+piface:
+  # Number of PiFace Digital boards connected (1–4)
+  boards: 1
+  # Reserved for a future polling fallback; currently unused because the bridge requires interrupts
+  poll_interval: 0.1
+
+homeassistant:
+  # Enable automatic Home Assistant MQTT Discovery
+  discovery: true
+  # Discovery prefix configured in your Home Assistant MQTT integration
+  discovery_prefix: "homeassistant"

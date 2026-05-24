@@ -1,0 +1,17 @@
+[Unit]
+Description=PiFace Digital MQTT Bridge
+Documentation=https://github.com/hammermaps/pifacedigitalio
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# Adjust the path to the script and config file as needed
+ExecStart=/usr/local/bin/piface-mqtt.py --config /etc/piface-mqtt/config.yaml
+Restart=on-failure
+RestartSec=5
+# Give the process a chance to shut down cleanly
+TimeoutStopSec=10
+
+[Install]
+WantedBy=multi-user.target

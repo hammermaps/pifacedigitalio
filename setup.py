@@ -1,8 +1,8 @@
 from pathlib import Path
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
-PIFACECOMMON_MIN_VERSION = '3.0.0'
+PIFACECOMMON_MIN_VERSION = '4.0.0'
 VERSION_FILE = "pifacedigitalio/version.py"
 
 
@@ -21,7 +21,7 @@ setup(
     author='Thomas Preston',
     author_email='thomas.preston@openlx.org.uk',
     url='http://piface.github.io/pifacedigitalio/',
-    packages=['pifacedigitalio'],
+    packages=find_packages(include=['pifacedigitalio', 'piface_mqtt']),
     long_description=(
         Path('README.md').read_text(encoding='utf-8')
         + Path('CHANGELOG').read_text(encoding='utf-8')
@@ -41,5 +41,11 @@ setup(
     keywords='piface digital raspberrypi openlx',
     license='GPLv3+',
     python_requires='>=3.8',
-    install_requires=['pifacecommon (>='+PIFACECOMMON_MIN_VERSION+')']
+    install_requires=[
+        'pifacecommon (=='+PIFACECOMMON_MIN_VERSION+')',
+        'paho-mqtt>=1.6.1',
+        'PyYAML>=6.0',
+    ],
+    scripts=['piface-mqtt.py'],
+    data_files=[('share/pifacedigitalio', ['config.example.yaml', 'piface-mqtt.service'])],
 )
