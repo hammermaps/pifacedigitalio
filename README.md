@@ -107,6 +107,22 @@ MQTT so that the board can be integrated into [Home Assistant](https://www.home-
        $ sudo systemctl status piface-mqtt
        $ journalctl -u piface-mqtt -f
 
+### Manual run / Debugging
+
+You can run the bridge directly from the command line without systemd:
+
+    $ python3 piface-mqtt.py --config /etc/piface-mqtt/config.yaml
+
+Add `--verbose` (or `-v`) to enable debug-level logging:
+
+    $ python3 piface-mqtt.py --config /etc/piface-mqtt/config.yaml --verbose
+
+### Running tests (no hardware required)
+
+The MQTT bridge unit tests do **not** require SPI hardware and can be run anywhere:
+
+    $ python3 -m pytest test_mqtt_bridge.py
+
 ### Configuration Reference
 
 See `config.example.yaml` for all available options with comments.
@@ -119,6 +135,8 @@ See `config.example.yaml` for all available options with comments.
 | `mqtt.password` | *(empty)* | Broker password (optional) |
 | `mqtt.topic_prefix` | `piface` | Prefix for all MQTT topics |
 | `mqtt.client_id` | `piface-mqtt` | MQTT client identifier |
+| `mqtt.keepalive` | `60` | Keep-alive interval in seconds |
 | `piface.boards` | `1` | Number of PiFace boards (1–4) |
+| `piface.poll_interval` | `0.1` | Polling interval in seconds (reserved; currently unused) |
 | `homeassistant.discovery` | `true` | Enable HA MQTT Discovery |
 | `homeassistant.discovery_prefix` | `homeassistant` | HA discovery prefix |
